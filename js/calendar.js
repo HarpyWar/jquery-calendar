@@ -1,12 +1,19 @@
 
 (function ($) {
+	/*var monthNames = ["January", "February", "March", "April", "May", "June",
+	  "July", "August", "September", "October", "November", "December"
+	];*/
+	var monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+	  "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
+	];
+	
 	/* "YYYY-MM[-DD]" => Date */
 	function strToDate(str) {
 		try {
-			var array = str.split('-');
-			var year = parseInt(array[0]);
+			var array = str.split('.');
+			var day = array.length > 2? parseInt(array[0]): 1 ;
 			var month = parseInt(array[1]);
-			var day = array.length > 2? parseInt(array[2]): 1 ;
+			var year = parseInt(array[2]);
 			if (year > 0 && month >= 0) {
 				return new Date(year, month - 1, day);
 			} else {
@@ -18,15 +25,16 @@
 	/* Date => "YYYY-MM-DD" */
 	function dateToStr(d) {
 		/* fix month zero base */
+		var day = d.getDate();
+		var month = d.getMonth()+1;
 		var year = d.getFullYear();
-		var month = d.getMonth();
-		return year + "-" + (month + 1) + "-" + d.getDate();
+		return (day < 10 ? '0' : '') + day + "." + (month < 10 ? '0' : '') + month + "." + year;
 	};
 
 	$.fn.calendar = function (options) {
 		var _this = this;
 		var opts = $.extend({}, $.fn.calendar.defaults, options);
-		var week = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+		var week = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 		var tHead = week.map(function (day) {
 			return "<th>" + day + "</th>";
 		}).join("");
@@ -57,8 +65,8 @@
 		_this.update = function (date) {
 			var mDate = new Date(date);
 			mDate.setDate(1); /* start of the month */
-			var day = mDate.getDay(); /* value 0~6: 0 -- Sunday, 6 -- Saturday */
-			mDate.setDate(mDate.getDate() - day) /* now mDate is the start day of the table */
+			var day = mDate.getDay()-1; /* value 0~6: 0 -- Sunday, 6 -- Saturday */
+			mDate.setDate(mDate.getDate() - day); /* now mDate is the start day of the table */
 
 			function dateToTag(d) {
 				var tag = $('<td><a href="javascript:void(0);"></a></td>');
@@ -76,7 +84,7 @@
 
 			var tBody = _this.find('tbody');
 			tBody.empty(); /* clear previous first */
-			var cols = Math.ceil((day + daysInMonth(date))/7);
+			var cols = Math.ceil((day + daysInMonth(date))/7 );
 			for (var i = 0; i < cols; i++) {
 				var tr = $('<tr></tr>');
 				for (var j = 0; j < 7; j++, mDate.setDate(mDate.getDate() + 1)) {
@@ -86,9 +94,12 @@
 			}
 
 			/* set month head */
-			var monthStr = dateToStr(date).replace(/-\d+$/, '');
-			_this.find('.month').text(monthStr)
+			var monthStr = monthNames[date.getMonth()] + ' ' + date.getFullYear();
+			_this.find('.month').text(monthStr);
+			_this.find('.month').attr('data-raw', dateToStr(date));
 		};
+		
+
 
 		_this.getCurrentDate = function () {
 			return _this.data('date');
@@ -120,7 +131,7 @@
 		});
 
 		function updateTable(monthOffset) {
-			var date = strToDate(_this.find('.month').text());
+			var date = strToDate(_this.find('.month').attr('data-raw'));
 			date.setMonth(date.getMonth() + monthOffset);
 			_this.update(date);
 		};
